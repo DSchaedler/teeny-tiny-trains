@@ -36,9 +36,9 @@ TRACK_LIBRARY[:CT] = { source_x: 32, source_y: 64 }.merge(SPRITE_BASE)
 
 # Turning Track
 TRACK_LIBRARY[:NE] = { source_x: 64, source_y: 64 }.merge(SPRITE_BASE)
-TRACK_LIBRARY[:SE] = { angle: 90 }.merge(TRACK_LIBRARY[:NE])
+TRACK_LIBRARY[:NW] = { angle: 90 }.merge(TRACK_LIBRARY[:NE])
 TRACK_LIBRARY[:SW] = { angle: 180 }.merge(TRACK_LIBRARY[:NE])
-TRACK_LIBRARY[:NW] = { angle: 270 }.merge(TRACK_LIBRARY[:NE])
+TRACK_LIBRARY[:SE] = { angle: 270 }.merge(TRACK_LIBRARY[:NE])
 
 # Up
 TRACK_LIBRARY[:US] = { source_x: 0, source_y: 32 }.merge(SPRITE_BASE)
@@ -78,11 +78,11 @@ MAP = [
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[SH SH SH SW NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA SV NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA SV SH CT NA NA NA NA NA NA NA NA NA],
+  %i[NA NA NA SV NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NE SH SH SH NA NA NA NA NA NA NA NA],
+  %i[NA NA NA NE SH NW SH NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
@@ -109,53 +109,77 @@ def blue_train_tick(args)
     args.state.blue_train.speed += args.state.blue_train.acceleration
   end
 
-  grid_x = ((args.state.blue_train.pos_x + (GRID_SIZE / 2) ) / GRID_SIZE).floor
-  grid_y = ((args.state.blue_train.pos_y + (GRID_SIZE / 2) )/ GRID_SIZE).floor
+  grid_x = ((args.state.blue_train.pos_x + (GRID_SIZE / 2)) / GRID_SIZE).floor
+  grid_y = ((args.state.blue_train.pos_y + (GRID_SIZE / 2)) / GRID_SIZE).floor
 
   map_tile = MAP[grid_y][grid_x]
 
   case map_tile
-    when :SV
-      case args.state.blue_train.angle
-        when {angle: 0}
-          args.state.blue_train.pos_y += args.state.blue_train.speed
-        when {angle: 180}
-          args.state.blue_train.pos_y -= args.state.blue_train.speed
-        when {angle: -135}
-          args.state.blue_train.angle = {angle: 180}
-      end
-    when :SH
-      case args.state.blue_train.angle
-        when {angle: -90}
-          args.state.blue_train.pos_x += args.state.blue_train.speed
-        when {angle: 90}
-          args.state.blue_train.pos_x -= args.state.blue_train.speed
-        when {angle: -135}
-          args.state.blue_train.angle = {angle: -90}
-      end
-    when :SW
-      case args.state.blue_train.angle
-        when {angle: -90}
-          args.state.blue_train.angle = {angle: -135}
-        when {angle: 0}
-          args.state.blue_train.angle = {angle: 45}
-        when {angle: -135}
-          args.state.blue_train.pos_x += args.state.blue_train.speed
-          args.state.blue_train.pos_y -= args.state.blue_train.speed
-      end
-    when :NE
-      case args.state.blue_train.angle
-        when {angle: 90}
-          args.state.blue_train.angle = {angle: 0}
-        when {angle: 180}
-          args.state.blue_train.angle = {angle: -135}
-        when {angle: -135}
-          args.state.blue_train.pos_x += args.state.blue_train.speed
-          args.state.blue_train.pos_y -= args.state.blue_train.speed
-      end
+  when :SV
+    case args.state.blue_train.angle
+    when { angle: 0 }
+      args.state.blue_train.pos_y += args.state.blue_train.speed
+    when { angle: 180 }
+      args.state.blue_train.pos_y -= args.state.blue_train.speed
+    when { angle: -135 }
+      args.state.blue_train.angle = { angle: 180 }
+    when { angle: -45 }
+      args.state.blue_train.angle = { angle: 0 }
+    end
+  # off_x = args.state.blue_train.pos_x % GRID_SIZE
+  # if off_x != 0
+  #   args.state.blue_train.pos_x -= off_x
+  # end
+
+  when :SH
+    case args.state.blue_train.angle
+    when { angle: -90 }
+      args.state.blue_train.pos_x += args.state.blue_train.speed
+    when { angle: 90 }
+      args.state.blue_train.pos_x -= args.state.blue_train.speed
+    when { angle: -135 }
+      args.state.blue_train.angle = { angle: -90 }
+    end
+  # off_y = args.state.blue_train.pos_y % GRID_SIZE
+  # if off_y != 0
+  #   args.state.blue_train.pos_y -= off_y
+  # end
+  when :SW
+    case args.state.blue_train.angle
+    when { angle: -90 }
+      args.state.blue_train.angle = { angle: -135 }
+    when { angle: 0 }
+      args.state.blue_train.angle = { angle: 45 }
+    when { angle: -135 }
+      args.state.blue_train.pos_x += args.state.blue_train.speed
+      args.state.blue_train.pos_y -= args.state.blue_train.speed
+    end
+  when :NE
+    case args.state.blue_train.angle
+    when { angle: 90 }
+      args.state.blue_train.angle = { angle: 0 }
+    when { angle: 180 }
+      args.state.blue_train.angle = { angle: -135 }
+    when { angle: -135 }
+      args.state.blue_train.pos_x += args.state.blue_train.speed
+      args.state.blue_train.pos_y -= args.state.blue_train.speed
+    end
+  when :NW
+    case args.state.blue_train.angle
+    when { angle: -90 }
+      args.state.blue_train.angle = { angle: -45 }
+    when { angle: 180 }
+      args.state.blue_train.angle = { angle: -135 }
+    when { angle: -135 }
+      args.state.blue_train.pos_x += args.state.blue_train.speed
+      args.state.blue_train.pos_y -= args.state.blue_train.speed
+    when { angle: -45 }
+      args.state.blue_train.pos_x += args.state.blue_train.speed
+      args.state.blue_train.pos_y += args.state.blue_train.speed
+    end
   end
 
-  pos = {x: args.state.blue_train.pos_x, y: args.state.blue_train.pos_y}
+  pos = { x: args.state.blue_train.pos_x, y: args.state.blue_train.pos_y }
 
   args.state.blue_train.sprite = pos.merge(BLUE_TRAIN).merge(args.state.blue_train.angle)
 end
@@ -176,7 +200,7 @@ def initialize(args)
   args.state.blue_train.pos_y = 11 * GRID_SIZE
   args.state.blue_train.angle = { angle: -90 }
   args.state.blue_train.speed = 0
-  args.state.blue_train.max_speed = 5
+  args.state.blue_train.max_speed = 3
   args.state.blue_train.acceleration = 0.01
   args.state.blue_train.sprite = args.state.blue_train.pos.merge(BLUE_TRAIN).merge(args.state.blue_train.angle)
 end
