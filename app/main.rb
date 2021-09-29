@@ -22,7 +22,7 @@ BLUE_TRAIN = { source_x: 64, source_y: 32 }.merge(SPRITE_BASE)
 RED_CAR = { source_x: 0, source_y: 64 }.merge(SPRITE_BASE)
 BLUE_CAR = { source_x: 0, source_y: 32 }.merge(SPRITE_BASE)
 
-TRACK_LIBRARY = {} # rubocop:disable Style/MutableConstant
+TRACK_LIBRARY = {}
 
 # No Track
 TRACK_LIBRARY[:NA] = nil
@@ -78,37 +78,107 @@ MAP = [
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[SH SH SH SW NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA SV NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA SV NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
+  %i[NA NA NA SV SH CT NA NA NA NA NA NA NA NA NA],
+  %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
+  %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
+  %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
+  %i[NA NA NA NE SH SH SH NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA]
-].freeze
+].reverse.freeze
 
 def tick(args)
   args.state.init ||= false
   initialize(args) unless args.state.init
 
+  blue_train_tick(args)
+
   z_layer = Array.new(3) { [] }
 
   z_layer[0] << args.state.tracks
+  z_layer[1] << args.state.blue_train.sprite
 
   z_draw(args, layers: z_layer)
 end
 
+def blue_train_tick(args)
+  if args.state.blue_train.speed < args.state.blue_train.max_speed
+    args.state.blue_train.speed += args.state.blue_train.acceleration
+  end
+
+  grid_x = ((args.state.blue_train.pos_x + (GRID_SIZE / 2) ) / GRID_SIZE).floor
+  grid_y = ((args.state.blue_train.pos_y + (GRID_SIZE / 2) )/ GRID_SIZE).floor
+
+  map_tile = MAP[grid_y][grid_x]
+
+  case map_tile
+    when :SV
+      case args.state.blue_train.angle
+        when {angle: 0}
+          args.state.blue_train.pos_y += args.state.blue_train.speed
+        when {angle: 180}
+          args.state.blue_train.pos_y -= args.state.blue_train.speed
+        when {angle: -135}
+          args.state.blue_train.angle = {angle: 180}
+      end
+    when :SH
+      case args.state.blue_train.angle
+        when {angle: -90}
+          args.state.blue_train.pos_x += args.state.blue_train.speed
+        when {angle: 90}
+          args.state.blue_train.pos_x -= args.state.blue_train.speed
+        when {angle: -135}
+          args.state.blue_train.angle = {angle: -90}
+      end
+    when :SW
+      case args.state.blue_train.angle
+        when {angle: -90}
+          args.state.blue_train.angle = {angle: -135}
+        when {angle: 0}
+          args.state.blue_train.angle = {angle: 45}
+        when {angle: -135}
+          args.state.blue_train.pos_x += args.state.blue_train.speed
+          args.state.blue_train.pos_y -= args.state.blue_train.speed
+      end
+    when :NE
+      case args.state.blue_train.angle
+        when {angle: 90}
+          args.state.blue_train.angle = {angle: 0}
+        when {angle: 180}
+          args.state.blue_train.angle = {angle: -135}
+        when {angle: -135}
+          args.state.blue_train.pos_x += args.state.blue_train.speed
+          args.state.blue_train.pos_y -= args.state.blue_train.speed
+      end
+  end
+
+  pos = {x: args.state.blue_train.pos_x, y: args.state.blue_train.pos_y}
+
+  args.state.blue_train.sprite = pos.merge(BLUE_TRAIN).merge(args.state.blue_train.angle)
+end
+
 def initialize(args)
+  args.state.init = true
+  puts "Running Init at #{args.state.tick_count}"
+
   args.state.tracks = []
   MAP.each_with_index do |row, index_y|
     row.each_with_index do |spot, index_x|
-      new_track = { x: index_x * GRID_SIZE, y: index_y * GRID_SIZE }
+      new_track = { x: index_x * GRID_SIZE, y: (index_y * GRID_SIZE) }
       args.state.tracks << new_track.merge(TRACK_LIBRARY[spot]) if spot != :NA
     end
   end
+
+  args.state.blue_train.pos_x = 0 * GRID_SIZE
+  args.state.blue_train.pos_y = 11 * GRID_SIZE
+  args.state.blue_train.angle = { angle: -90 }
+  args.state.blue_train.speed = 0
+  args.state.blue_train.max_speed = 5
+  args.state.blue_train.acceleration = 0.01
+  args.state.blue_train.sprite = args.state.blue_train.pos.merge(BLUE_TRAIN).merge(args.state.blue_train.angle)
 end
 
 def z_draw(args, layers:, debug: nil)
