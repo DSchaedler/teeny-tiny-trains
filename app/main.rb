@@ -76,16 +76,16 @@ MAP = [
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[SH SH SH SW NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA SV NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA SV NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA SV NA SV NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NE SH NW SH NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
+  %i[SH SW NA NA NA NA NA NA NA NA NA NA NA NA NA],
+  %i[NA SV NA NA NA NA NA NA NA NA NA NA NA NA NA],
+  %i[SE NW NA NA NA NA NA NA NA NA NA NA NA NA NA],
+  %i[SV NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
+  %i[SV NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
+  %i[SV NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
+  %i[NA NA NA NA NA NA NA NA NA SE SW NA NA NA NA],
+  %i[NA NA NA NA NA NA NA NA NA SV SV NA NA NA NA],
+  %i[NA NA NA NA NA NA NA NA NA SV SV NA NA NA NA],
+  %i[NA NA NA NA NA NA NA NA NA NA NE SH SH SH SH],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA]
 ].reverse.freeze
@@ -94,94 +94,135 @@ def tick(args)
   args.state.init ||= false
   initialize(args) unless args.state.init
 
-  blue_train_tick(args)
-
   z_layer = Array.new(3) { [] }
 
   z_layer[0] << args.state.tracks
-  z_layer[1] << args.state.blue_train.sprite
+
+  args.state.trains.each do |train|
+    train.tick(args)
+    z_layer[1] << train.sprite
+  end
 
   z_draw(args, layers: z_layer)
 end
 
-def blue_train_tick(args)
-  if args.state.blue_train.speed < args.state.blue_train.max_speed
-    args.state.blue_train.speed += args.state.blue_train.acceleration
+class Train
+  attr_accessor :sprite
+
+  def initialize(_args, sprite:, pos:, angle: )
+
+    @pos_x = pos[:x]
+    @pos_y = pos[:y]
+    @angle = angle
+    @speed = 0
+    @max_speed = 2.5
+    @acceleration = 0.01
+    @sprite = sprite
   end
 
-  grid_x = ((args.state.blue_train.pos_x + (GRID_SIZE / 2)) / GRID_SIZE).floor
-  grid_y = ((args.state.blue_train.pos_y + (GRID_SIZE / 2)) / GRID_SIZE).floor
+  def tick(_args)
+    @speed += @acceleration if @speed < @max_speed
 
-  map_tile = MAP[grid_y][grid_x]
+    grid_x = ((@pos_x + (GRID_SIZE / 2)) / GRID_SIZE).floor
+    grid_y = ((@pos_y + (GRID_SIZE / 2)) / GRID_SIZE).floor
 
-  case map_tile
-  when :SV
-    case args.state.blue_train.angle
-    when { angle: 0 }
-      args.state.blue_train.pos_y += args.state.blue_train.speed
-    when { angle: 180 }
-      args.state.blue_train.pos_y -= args.state.blue_train.speed
-    when { angle: -135 }
-      args.state.blue_train.angle = { angle: 180 }
-    when { angle: -45 }
-      args.state.blue_train.angle = { angle: 0 }
-    end
-  # off_x = args.state.blue_train.pos_x % GRID_SIZE
-  # if off_x != 0
-  #   args.state.blue_train.pos_x -= off_x
-  # end
+    map_tile = MAP[grid_y][grid_x]
 
-  when :SH
-    case args.state.blue_train.angle
-    when { angle: -90 }
-      args.state.blue_train.pos_x += args.state.blue_train.speed
-    when { angle: 90 }
-      args.state.blue_train.pos_x -= args.state.blue_train.speed
-    when { angle: -135 }
-      args.state.blue_train.angle = { angle: -90 }
+    case map_tile
+    when :SV
+      case @angle
+      when 0
+        @pos_y += @speed
+      when 180
+        @pos_y -= @speed
+      when -135
+        @angle = 180
+      when -45
+        @angle = 0
+      when 135
+        @angle = 180
+      when 45
+        @angle = 0
+      end
+
+    when :SH
+      case @angle
+      when -90
+        @pos_x += @speed
+      when 90
+        @pos_x -= @speed
+      when -135
+        @angle = -90
+      when 135
+        @angle = 90
+      when -45
+        @angle = -90
+      end
+    # off_y = @pos_y % GRID_SIZE
+    # if off_y != 0
+    #   @pos_y -= off_y
+    # end
+    when :SW
+      case @angle
+      when -90
+        @angle = -135
+      when 0
+        @angle = 45
+      when -135
+        @pos_x += @speed * 0.707
+        @pos_y -= @speed * 0.707
+      when 45
+        @pos_x -= @speed * 0.707
+        @pos_y += @speed * 0.707
+      end
+    when :SE
+      case @angle
+      when 90
+        @angle = 135
+      when 0
+        @angle = -45
+      when 45
+        @angle = 135
+      when 135
+        @pos_x -= @speed * 0.707
+        @pos_y -= @speed * 0.707
+      when -45
+        @pos_x += @speed * 0.707
+        @pos_y += @speed * 0.707
+      end
+    when :NE
+      case @angle
+      when 90
+        @angle = 45
+      when 180
+        @angle = -135
+      when -135
+        @pos_x += @speed * 0.707
+        @pos_y -= @speed * 0.707
+      when 45
+        @pos_x -= @speed * 0.707
+        @pos_y += @speed * 0.707
+      end
+    when :NW
+      case @angle
+      when -90
+        @angle = -45
+      when 180
+        @angle = 135
+      when 135
+        @pos_x -= @speed * 0.707
+        @pos_y -= @speed * 0.707
+      when -45
+        @pos_x += @speed * 0.707
+        @pos_y += @speed * 0.707
+      end
     end
-  # off_y = args.state.blue_train.pos_y % GRID_SIZE
-  # if off_y != 0
-  #   args.state.blue_train.pos_y -= off_y
-  # end
-  when :SW
-    case args.state.blue_train.angle
-    when { angle: -90 }
-      args.state.blue_train.angle = { angle: -135 }
-    when { angle: 0 }
-      args.state.blue_train.angle = { angle: 45 }
-    when { angle: -135 }
-      args.state.blue_train.pos_x += args.state.blue_train.speed
-      args.state.blue_train.pos_y -= args.state.blue_train.speed
-    end
-  when :NE
-    case args.state.blue_train.angle
-    when { angle: 90 }
-      args.state.blue_train.angle = { angle: 0 }
-    when { angle: 180 }
-      args.state.blue_train.angle = { angle: -135 }
-    when { angle: -135 }
-      args.state.blue_train.pos_x += args.state.blue_train.speed
-      args.state.blue_train.pos_y -= args.state.blue_train.speed
-    end
-  when :NW
-    case args.state.blue_train.angle
-    when { angle: -90 }
-      args.state.blue_train.angle = { angle: -45 }
-    when { angle: 180 }
-      args.state.blue_train.angle = { angle: -135 }
-    when { angle: -135 }
-      args.state.blue_train.pos_x += args.state.blue_train.speed
-      args.state.blue_train.pos_y -= args.state.blue_train.speed
-    when { angle: -45 }
-      args.state.blue_train.pos_x += args.state.blue_train.speed
-      args.state.blue_train.pos_y += args.state.blue_train.speed
-    end
+
+    pos = { x: @pos_x, y: @pos_y }
+    angle = {angle: @angle}
+
+    @sprite = @sprite.merge(pos).merge(angle)
   end
-
-  pos = { x: args.state.blue_train.pos_x, y: args.state.blue_train.pos_y }
-
-  args.state.blue_train.sprite = pos.merge(BLUE_TRAIN).merge(args.state.blue_train.angle)
 end
 
 def initialize(args)
@@ -196,13 +237,22 @@ def initialize(args)
     end
   end
 
-  args.state.blue_train.pos_x = 0 * GRID_SIZE
-  args.state.blue_train.pos_y = 11 * GRID_SIZE
-  args.state.blue_train.angle = { angle: -90 }
-  args.state.blue_train.speed = 0
-  args.state.blue_train.max_speed = 3
-  args.state.blue_train.acceleration = 0.01
-  args.state.blue_train.sprite = args.state.blue_train.pos.merge(BLUE_TRAIN).merge(args.state.blue_train.angle)
+  args.state.trains = []
+  args.state.blue_train = Train.new(
+    args,
+    sprite: BLUE_TRAIN,
+    pos: {x: 0 * GRID_SIZE, y: 11 * GRID_SIZE},
+    angle: -90
+  )
+  args.state.trains << args.state.blue_train
+  args.state.red_train = Train.new(
+    args,
+    sprite: RED_TRAIN,
+    pos: {x: 14 * GRID_SIZE, y: 2 * GRID_SIZE},
+    angle: 90
+  )
+  args.state.trains << args.state.red_train
+
 end
 
 def z_draw(args, layers:, debug: nil)
