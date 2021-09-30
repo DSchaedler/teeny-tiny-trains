@@ -40,35 +40,6 @@ TRACK_LIBRARY[:NW] = { angle: 90 }.merge(TRACK_LIBRARY[:NE])
 TRACK_LIBRARY[:SW] = { angle: 180 }.merge(TRACK_LIBRARY[:NE])
 TRACK_LIBRARY[:SE] = { angle: 270 }.merge(TRACK_LIBRARY[:NE])
 
-# Up
-TRACK_LIBRARY[:US] = { source_x: 0, source_y: 32 }.merge(SPRITE_BASE)
-TRACK_LIBRARY[:UT] = { source_x: 32, source_y: 32 }.merge(SPRITE_BASE)
-
-# Right
-TRACK_LIBRARY[:RS] = { angle: 90 }.merge(TRACK_LIBRARY[:US])
-TRACK_LIBRARY[:RT] = { angle: 90 }.merge(TRACK_LIBRARY[:UT])
-
-# Down
-TRACK_LIBRARY[:DS] = { angle: 180 }.merge(TRACK_LIBRARY[:US])
-TRACK_LIBRARY[:DT] = { angle: 180 }.merge(TRACK_LIBRARY[:UT])
-
-# Left
-TRACK_LIBRARY[:LS] = { angle: 270 }.merge(TRACK_LIBRARY[:US])
-TRACK_LIBRARY[:LT] = { angle: 270 }.merge(TRACK_LIBRARY[:UT])
-
-# Switch Mirrors
-TRACK_LIBRARY[:UD] = { flip_horizontal: true }.merge(TRACK_LIBRARY[:US])
-TRACK_LIBRARY[:UY] = { flip_horizontal: true }.merge(TRACK_LIBRARY[:UT])
-
-TRACK_LIBRARY[:RD] = { flip_vertical: true }.merge(TRACK_LIBRARY[:RS])
-TRACK_LIBRARY[:RY] = { flip_vertical: true }.merge(TRACK_LIBRARY[:RT])
-
-TRACK_LIBRARY[:DD] = { flip_horizontal: true }.merge(TRACK_LIBRARY[:DS])
-TRACK_LIBRARY[:DY] = { flip_horizontal: true }.merge(TRACK_LIBRARY[:DT])
-
-TRACK_LIBRARY[:LS] = { flip_vertical: true }.merge(TRACK_LIBRARY[:LS])
-TRACK_LIBRARY[:LT] = { flip_vertical: true }.merge(TRACK_LIBRARY[:LT])
-
 # ----
 # Map
 
@@ -90,6 +61,33 @@ MAP = [
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA]
 ].reverse.freeze
 
+ANGLE_DICT = {
+  n: 0,
+  w: 90,
+  s: 180,
+  e: 270
+}.freeze
+
+SV_REDIRECT = { n: :n, s: :s, e: :e, w: :w }
+SH_REDIRECT = { n: :n, s: :s, e: :e, w: :w }
+
+SW_REDIRECT = { e: :s, n: :w }
+SE_REDIRECT = { w: :s, n: :e }
+NW_REDIRECT = { e: :n, s: :w }
+NE_REDIRECT = { w: :n, s: :e }
+
+NA_REDIRECT = { n: :x, s: :x, e: :x, w: :x }
+
+TRACK_REDIRECT = {
+  SV: SV_REDIRECT,
+  SH: SH_REDIRECT,
+  SW: SW_REDIRECT,
+  SE: SE_REDIRECT,
+  NW: NW_REDIRECT,
+  NE: NE_REDIRECT,
+  NA: NA_REDIRECT
+}
+
 def tick(args)
   args.state.init ||= false
   initialize(args) unless args.state.init
@@ -104,125 +102,6 @@ def tick(args)
   end
 
   z_draw(args, layers: z_layer)
-end
-
-class Train
-  attr_accessor :sprite
-
-  def initialize(_args, sprite:, pos:, angle: )
-
-    @pos_x = pos[:x]
-    @pos_y = pos[:y]
-    @angle = angle
-    @speed = 0
-    @max_speed = 2.5
-    @acceleration = 0.01
-    @sprite = sprite
-  end
-
-  def tick(_args)
-    @speed += @acceleration if @speed < @max_speed
-
-    grid_x = ((@pos_x + (GRID_SIZE / 2)) / GRID_SIZE).floor
-    grid_y = ((@pos_y + (GRID_SIZE / 2)) / GRID_SIZE).floor
-
-    map_tile = MAP[grid_y][grid_x]
-
-    case map_tile
-    when :SV
-      case @angle
-      when 0
-        @pos_y += @speed
-      when 180
-        @pos_y -= @speed
-      when -135
-        @angle = 180
-      when -45
-        @angle = 0
-      when 135
-        @angle = 180
-      when 45
-        @angle = 0
-      end
-
-    when :SH
-      case @angle
-      when -90
-        @pos_x += @speed
-      when 90
-        @pos_x -= @speed
-      when -135
-        @angle = -90
-      when 135
-        @angle = 90
-      when -45
-        @angle = -90
-      end
-    # off_y = @pos_y % GRID_SIZE
-    # if off_y != 0
-    #   @pos_y -= off_y
-    # end
-    when :SW
-      case @angle
-      when -90
-        @angle = -135
-      when 0
-        @angle = 45
-      when -135
-        @pos_x += @speed * 0.707
-        @pos_y -= @speed * 0.707
-      when 45
-        @pos_x -= @speed * 0.707
-        @pos_y += @speed * 0.707
-      end
-    when :SE
-      case @angle
-      when 90
-        @angle = 135
-      when 0
-        @angle = -45
-      when 45
-        @angle = 135
-      when 135
-        @pos_x -= @speed * 0.707
-        @pos_y -= @speed * 0.707
-      when -45
-        @pos_x += @speed * 0.707
-        @pos_y += @speed * 0.707
-      end
-    when :NE
-      case @angle
-      when 90
-        @angle = 45
-      when 180
-        @angle = -135
-      when -135
-        @pos_x += @speed * 0.707
-        @pos_y -= @speed * 0.707
-      when 45
-        @pos_x -= @speed * 0.707
-        @pos_y += @speed * 0.707
-      end
-    when :NW
-      case @angle
-      when -90
-        @angle = -45
-      when 180
-        @angle = 135
-      when 135
-        @pos_x -= @speed * 0.707
-        @pos_y -= @speed * 0.707
-      when -45
-        @pos_x += @speed * 0.707
-        @pos_y += @speed * 0.707
-      end
-    end
-
-    pos = { x: @pos_x, y: @pos_y }
-    angle = {angle: @angle}
-
-    @sprite = @sprite.merge(pos).merge(angle)
-  end
 end
 
 def initialize(args)
@@ -241,21 +120,64 @@ def initialize(args)
   args.state.blue_train = Train.new(
     args,
     sprite: BLUE_TRAIN,
-    pos: {x: 0 * GRID_SIZE, y: 11 * GRID_SIZE},
-    angle: -90
+    pos: { x: 0 * GRID_SIZE, y: 11 * GRID_SIZE },
+    direction: :e
   )
   args.state.trains << args.state.blue_train
   args.state.red_train = Train.new(
     args,
     sprite: RED_TRAIN,
-    pos: {x: 14 * GRID_SIZE, y: 2 * GRID_SIZE},
-    angle: 90
+    pos: { x: 14 * GRID_SIZE, y: 2 * GRID_SIZE },
+    direction: :w
   )
   args.state.trains << args.state.red_train
-
 end
 
 def z_draw(args, layers:, debug: nil)
   args.outputs.primitives << layers if layers
   args.outputs.debug << debug if debug
+end
+
+class Train
+  attr_accessor :sprite
+
+  def initialize(_args, sprite:, pos:, direction:)
+    @pos_x = pos[:x]
+    @pos_y = pos[:y]
+    @direction = direction
+    @angle = ANGLE_DICT[@direction]
+    @speed = 1
+    @sprite = sprite
+  end
+
+  def tick(args)
+
+    grid_x = ((@pos_x) / GRID_SIZE).floor
+    grid_y = ((@pos_y) / GRID_SIZE).floor
+
+    map_tile = MAP[grid_y][grid_x]
+
+    if args.state.tick_count.mod(GRID_SIZE).zero?
+      @direction = TRACK_REDIRECT[map_tile][@direction]
+      @angle = ANGLE_DICT[@direction]
+    end
+
+    case @direction
+    when :n
+      @pos_y += @speed
+    when :w
+      @pos_x -= @speed
+    when :s
+      @pos_y -= @speed
+    when :e
+      @pos_x += @speed
+    when :x
+      # do nothing
+    end
+
+    pos = { x: @pos_x, y: @pos_y }
+    angle = { angle: @angle }
+
+    @sprite = @sprite.merge(pos).merge(angle)
+  end
 end

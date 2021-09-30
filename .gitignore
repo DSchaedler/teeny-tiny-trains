@@ -1,3 +1,6 @@
+/exceptions/
+/logs
+
 *.gem
 *.rbc
 /.config
