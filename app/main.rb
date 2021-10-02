@@ -1,11 +1,23 @@
 # Teeny Tiny Trains
 # Copyright 2021 Dee Schaedler
 #
-# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use , copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
 #
-# Thee above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+# Thee above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
 #
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 
 # ----
 # Game Constants
@@ -22,23 +34,23 @@ BLUE_TRAIN = { source_x: 64, source_y: 32 }.merge(SPRITE_BASE)
 RED_CAR = { source_x: 0, source_y: 64 }.merge(SPRITE_BASE)
 BLUE_CAR = { source_x: 0, source_y: 32 }.merge(SPRITE_BASE)
 
-TRACK_LIBRARY = {}
-
-# No Track
-TRACK_LIBRARY[:NA] = nil
-
-# Straight Track
-TRACK_LIBRARY[:SV] = { source_x: 0, source_y: 64 }.merge(SPRITE_BASE)
-TRACK_LIBRARY[:SH] = { angle: 90 }.merge(TRACK_LIBRARY[:SV])
-
-# Cross Track
-TRACK_LIBRARY[:CT] = { source_x: 32, source_y: 64 }.merge(SPRITE_BASE)
-
-# Turning Track
-TRACK_LIBRARY[:NE] = { source_x: 64, source_y: 64 }.merge(SPRITE_BASE)
-TRACK_LIBRARY[:NW] = { angle: 90 }.merge(TRACK_LIBRARY[:NE])
-TRACK_LIBRARY[:SW] = { angle: 180 }.merge(TRACK_LIBRARY[:NE])
-TRACK_LIBRARY[:SE] = { angle: 270 }.merge(TRACK_LIBRARY[:NE])
+TRACK_LIBRARY = {
+  NA: nil,
+  SV: { source_x: 0, source_y: 64, w: GRID_SIZE, h: GRID_SIZE, source_w: 32,
+        source_h: 32, path: 'sprites/sprites.png' },
+  SH: { source_x: 0, source_y: 64, angle: 90, w: GRID_SIZE, h: GRID_SIZE,
+        source_w: 32, source_h: 32, path: 'sprites/sprites.png' },
+  CT: { source_x: 32, source_y: 64, w: GRID_SIZE, h: GRID_SIZE, source_w: 32,
+        source_h: 32, path: 'sprites/sprites.png' },
+  NE: { source_x: 64, source_y: 64, w: GRID_SIZE, h: GRID_SIZE, source_w: 32,
+        source_h: 32, path: 'sprites/sprites.png' },
+  NW: { source_x: 64, source_y: 64, angle: 90, w: GRID_SIZE, h: GRID_SIZE,
+        source_w: 32, source_h: 32, path: 'sprites/sprites.png' },
+  SW: { source_x: 64, source_y: 64, angle: 180, w: GRID_SIZE, h: GRID_SIZE,
+        source_w: 32, source_h: 32, path: 'sprites/sprites.png' },
+  SE: { source_x: 64, source_y: 64, angle: 270, w: GRID_SIZE, h: GRID_SIZE,
+        source_w: 32, source_h: 32, path: 'sprites/sprites.png' }
+}.freeze
 
 # ----
 # Map
@@ -47,16 +59,16 @@ MAP = [
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[SH SW NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA SV NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[SE NW NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[SV NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[SV NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[SV NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA SE SW NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA SV SV NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA SV SV NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NE SH SH SH SH],
+  %i[SH SH SH SH SW NA NA NA NA NA SE SH SH SH SH],
+  %i[NA NA NA NA SV NA NA NA NA NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA NA NA NA SV NA NA NA NA],
+  %i[NA NA NA NA NE SH SH SW NA NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA],
+  %i[NA NA NA NA NE SH SH NW NA NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA NA NA NA SV NA NA NA NA],
+  %i[SH SH SH SH NW NA NA NA NA NA NE SH SH SH SH],
+  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
   %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA]
 ].reverse.freeze
@@ -65,18 +77,19 @@ ANGLE_DICT = {
   n: 0,
   w: 90,
   s: 180,
-  e: 270
+  e: 270,
+  x: 0
 }.freeze
 
-SV_REDIRECT = { n: :n, s: :s, e: :e, w: :w }
-SH_REDIRECT = { n: :n, s: :s, e: :e, w: :w }
+SV_REDIRECT = { n: :n, s: :s, e: :e, w: :w }.freeze
+SH_REDIRECT = { n: :n, s: :s, e: :e, w: :w }.freeze
 
-SW_REDIRECT = { e: :s, n: :w }
-SE_REDIRECT = { w: :s, n: :e }
-NW_REDIRECT = { e: :n, s: :w }
-NE_REDIRECT = { w: :n, s: :e }
+SW_REDIRECT = { e: :s, n: :w }.freeze
+SE_REDIRECT = { w: :s, n: :e }.freeze
+NW_REDIRECT = { e: :n, s: :w }.freeze
+NE_REDIRECT = { w: :n, s: :e }.freeze
 
-NA_REDIRECT = { n: :x, s: :x, e: :x, w: :x }
+NA_REDIRECT = { n: :x, s: :x, e: :x, w: :x, x: :x }.freeze
 
 TRACK_REDIRECT = {
   SV: SV_REDIRECT,
@@ -86,35 +99,70 @@ TRACK_REDIRECT = {
   NW: NW_REDIRECT,
   NE: NE_REDIRECT,
   NA: NA_REDIRECT
-}
+}.freeze
 
 def tick(args)
   args.state.init ||= false
   initialize(args) unless args.state.init
 
+  mouse_click(args) if args.inputs.mouse.up
+
   z_layer = Array.new(3) { [] }
 
-  z_layer[0] << args.state.tracks
+  z_layer[0] << { x: 0, y: 0, w: args.grid.w, h: args.grid.h,
+                  path: :straight_tracks, primitive_marker: :sprite }
+  z_layer[0] << { x: 0, y: 0, w: args.grid.w, h: args.grid.h,
+                  path: :corner_tracks, primitive_marker: :sprite }
 
   args.state.trains.each do |train|
     train.tick(args)
     z_layer[1] << train.sprite
   end
 
-  z_draw(args, layers: z_layer)
+  debug = [args.gtk.framerate_diagnostics_primitives]
+
+  z_draw(args, layers: z_layer, debug: debug)
+end
+
+def mouse_click(args)
+  click_x = args.inputs.mouse.point[0]
+  click_y = args.inputs.mouse.point[1]
+
+  grid_x = (click_x / GRID_SIZE).floor
+  grid_y = (click_y / GRID_SIZE).floor
+
+  return unless click_x <= MAP[0].length * GRID_SIZE
+
+  map_tile = args.state.map[grid_y][grid_x]
+  case map_tile
+  when :SW
+    args.state.map[grid_y][grid_x] = :NW
+  when :SE
+    args.state.map[grid_y][grid_x] = :SW
+  when :NW
+    args.state.map[grid_y][grid_x] = :NE
+  when :NE
+    args.state.map[grid_y][grid_x] = :SE
+  end
+
+  args.clear_render_targets
+  build_render_targets(args)
 end
 
 def initialize(args)
   args.state.init = true
   puts "Running Init at #{args.state.tick_count}"
 
-  args.state.tracks = []
+  args.state.map ||= {}
+
   MAP.each_with_index do |row, index_y|
+    args.state.map[index_y] ||= {}
     row.each_with_index do |spot, index_x|
-      new_track = { x: index_x * GRID_SIZE, y: (index_y * GRID_SIZE) }
-      args.state.tracks << new_track.merge(TRACK_LIBRARY[spot]) if spot != :NA
+      args.state.map[index_y][index_x] = spot
     end
   end
+
+  build_render_targets(args)
 
   args.state.trains = []
   args.state.blue_train = Train.new(
@@ -127,10 +175,23 @@ def initialize(args)
   args.state.red_train = Train.new(
     args,
     sprite: RED_TRAIN,
-    pos: { x: 14 * GRID_SIZE, y: 2 * GRID_SIZE },
+    pos: { x: 14 * GRID_SIZE, y: 11 * GRID_SIZE },
     direction: :w
   )
   args.state.trains << args.state.red_train
+end
+
+def build_render_targets(args)
+  args.state.map.each_pair do |index_y, row|
+    row.each_pair do |index_x, spot|
+      new_track = { x: index_x * GRID_SIZE, y: (index_y * GRID_SIZE) }
+      if %i[SV SH].include? spot
+        args.render_target(:straight_tracks).sprites << new_track.merge(TRACK_LIBRARY[spot])
+      elsif spot != :NA
+        args.render_target(:corner_tracks).sprites << new_track.merge(TRACK_LIBRARY[spot])
+      end
+    end
+  end
 end
 
 def z_draw(args, layers:, debug: nil)
@@ -151,15 +212,21 @@ class Train
   end
 
   def tick(args)
-
-    grid_x = ((@pos_x) / GRID_SIZE).floor
-    grid_y = ((@pos_y) / GRID_SIZE).floor
-
-    map_tile = MAP[grid_y][grid_x]
-
     if args.state.tick_count.mod(GRID_SIZE).zero?
-      @direction = TRACK_REDIRECT[map_tile][@direction]
+      grid_x = (@pos_x / GRID_SIZE).floor
+      grid_y = (@pos_y / GRID_SIZE).floor
+
+      map_tile = args.state.map[grid_y][grid_x]
+
+      if @pos_x < args.grid.left || @pos_x + GRID_SIZE > args.grid.top || @pos_y < args.grid.bottom || @pos_y > args.grid.right
+        @direction = :x
+      else
+        @direction = TRACK_REDIRECT[map_tile][@direction]
+      end
+
       @angle = ANGLE_DICT[@direction]
+      @sprite = @sprite.merge(angle: @angle)
+
     end
 
     case @direction
@@ -171,13 +238,10 @@ class Train
       @pos_y -= @speed
     when :e
       @pos_x += @speed
-    when :x
-      # do nothing
     end
 
-    pos = { x: @pos_x, y: @pos_y }
-    angle = { angle: @angle }
+    return unless @direction != :x
 
-    @sprite = @sprite.merge(pos).merge(angle)
+    @sprite = @sprite.merge(x: @pos_x, y: @pos_y)
   end
 end
