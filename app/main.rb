@@ -112,18 +112,21 @@ def tick(args)
   z_layer = Array.new(3) { [] }
 
   z_layer[0] << { x: 0, y: 0, w: args.grid.w, h: args.grid.h,
+                  path: :background, primitive_marker: :sprite}
+
+  z_layer[1] << { x: 0, y: 0, w: args.grid.w, h: args.grid.h,
                   path: :straight_tracks, primitive_marker: :sprite }
-  z_layer[0] << { x: 0, y: 0, w: args.grid.w, h: args.grid.h,
+  z_layer[1] << { x: 0, y: 0, w: args.grid.w, h: args.grid.h,
                   path: :corner_tracks, primitive_marker: :sprite }
 
   args.state.blue_train.each do |train|
     train.tick(args)
-    z_layer[1] << train.sprite
+    z_layer[2] << train.sprite
   end
 
   args.state.red_train.each do |train|
     train.tick(args)
-    z_layer[1] << train.sprite
+    z_layer[2] << train.sprite
   end
 
   debug = [args.gtk.framerate_diagnostics_primitives]
@@ -166,6 +169,7 @@ def initialize(args)
     args.state.map[index_y] ||= {}
     row.each_with_index do |spot, index_x|
       args.state.map[index_y][index_x] = spot
+      args.render_target(:background).sprites << {x: index_x * GRID_SIZE, y: index_y * GRID_SIZE, w: GRID_SIZE, h: GRID_SIZE, path: 'sprites/gravel.png'}
     end
   end
 
