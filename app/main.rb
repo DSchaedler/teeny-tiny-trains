@@ -31,8 +31,8 @@ SPRITE_BASE = { w: GRID_SIZE, h: GRID_SIZE, source_w: 32, source_h: 32,
 RED_TRAIN = { source_x: 0, source_y: 0 }.merge(SPRITE_BASE)
 BLUE_TRAIN = { source_x: 64, source_y: 32 }.merge(SPRITE_BASE)
 
-RED_CAR = { source_x: 0, source_y: 64 }.merge(SPRITE_BASE)
-BLUE_CAR = { source_x: 0, source_y: 32 }.merge(SPRITE_BASE)
+RED_CAR = { source_x: 64, source_y: 0 }.merge(SPRITE_BASE)
+BLUE_CAR = { source_x: 32, source_y: 0 }.merge(SPRITE_BASE)
 
 TRACK_LIBRARY = {
   NA: nil,
@@ -53,24 +53,24 @@ TRACK_LIBRARY = {
 }.freeze
 
 # ----
-# Map
+# Map x: 0-25, y: 0-14
 
 MAP = [
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[SH SH SH SH SW NA NA NA NA NA SE SH SH SH SH],
-  %i[NA NA NA NA SV NA NA NA NA NA SV NA NA NA NA],
-  %i[NA NA NA NA SV NA NA NA NA NA SV NA NA NA NA],
-  %i[NA NA NA NA NE SH SH SW NA NA SV NA NA NA NA],
-  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA],
-  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA],
-  %i[NA NA NA NA NE SH SH NW NA NA SV NA NA NA NA],
-  %i[NA NA NA NA SV NA NA NA NA NA SV NA NA NA NA],
-  %i[SH SH SH SH NW NA NA NA NA NA NE SH SH SH SH],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA],
-  %i[NA NA NA NA NA NA NA NA NA NA NA NA NA NA NA]
+  %i[SH SH SH SH SW NA NA NA NA NA NA NA NA NA NA SE SH SH SH SE SH SE SH SH SH SH],
+  %i[NA NA NA NA NE SH SH SH SH SH SH SH SH SH SH SW NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA NA NA NA NA NA NA NA NA SV NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA NA NA NA SE SH SH SH SH SE NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA NA NA NA SV NA NA NA NA SV NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA NE SH SH NW SH SH NE SH SH SH SH NE SH SH SH NE SH NW NA NA NA NA],
+  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA SV NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA SV NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA NE SH SH SH SW SH SW NA NA NA NA],
+  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA SV NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA NE SH SH NW NA NA NA NA SV NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA SV NA NA NA SV NA SV NA NA NA NA],
+  %i[NA NA NA NA SE SH SH NW SH SH NE SH SH SH SH NW SH SH SH NE SH NW NA NA NA NA],
+  %i[NA NA NA NA SV NA NA NA NA NA NA NA NA NA NA SV NA NA NA NA NA NA NA NA NA NA],
+  %i[SH SH SH SH NW NA NA NA NA NA NA NA NA NA NA NE SH SH SH SH SH SH SH SH SH SH]
 ].reverse.freeze
 
 ANGLE_DICT = {
@@ -101,6 +101,8 @@ TRACK_REDIRECT = {
   NA: NA_REDIRECT
 }.freeze
 
+$gtk.reset
+
 def tick(args)
   args.state.init ||= false
   initialize(args) unless args.state.init
@@ -114,7 +116,12 @@ def tick(args)
   z_layer[0] << { x: 0, y: 0, w: args.grid.w, h: args.grid.h,
                   path: :corner_tracks, primitive_marker: :sprite }
 
-  args.state.trains.each do |train|
+  args.state.blue_train.each do |train|
+    train.tick(args)
+    z_layer[1] << train.sprite
+  end
+
+  args.state.red_train.each do |train|
     train.tick(args)
     z_layer[1] << train.sprite
   end
@@ -164,21 +171,63 @@ def initialize(args)
 
   build_render_targets(args)
 
-  args.state.trains = []
-  args.state.blue_train = Train.new(
+  args.state.blue_train = []
+  args.state.blue_train << Train.new(
     args,
     sprite: BLUE_TRAIN,
-    pos: { x: 0 * GRID_SIZE, y: 11 * GRID_SIZE },
+    pos: { x: 3 * GRID_SIZE, y: 14 * GRID_SIZE },
     direction: :e
   )
-  args.state.trains << args.state.blue_train
-  args.state.red_train = Train.new(
+
+  args.state.blue_train << Train.new(
+    args,
+    sprite: BLUE_CAR,
+    pos: { x: 2 * GRID_SIZE, y: 14 * GRID_SIZE },
+    direction: :e
+  )
+
+  args.state.blue_train << Train.new(
+    args,
+    sprite: BLUE_CAR,
+    pos: { x: 1 * GRID_SIZE, y: 14 * GRID_SIZE },
+    direction: :e
+  )
+
+  args.state.blue_train << Train.new(
+    args,
+    sprite: BLUE_CAR,
+    pos: { x: 0 * GRID_SIZE, y: 14 * GRID_SIZE },
+    direction: :e
+  )
+
+  args.state.red_train = []
+  args.state.red_train << Train.new(
     args,
     sprite: RED_TRAIN,
-    pos: { x: 14 * GRID_SIZE, y: 11 * GRID_SIZE },
+    pos: { x: 22 * GRID_SIZE, y: 14 * GRID_SIZE },
     direction: :w
   )
-  args.state.trains << args.state.red_train
+
+  args.state.red_train << Train.new(
+    args,
+    sprite: RED_CAR,
+    pos: { x: 23 * GRID_SIZE, y: 14 * GRID_SIZE },
+    direction: :w
+  )
+
+  args.state.red_train << Train.new(
+    args,
+    sprite: RED_CAR,
+    pos: { x: 24 * GRID_SIZE, y: 14 * GRID_SIZE },
+    direction: :w
+  )
+
+  args.state.red_train << Train.new(
+    args,
+    sprite: RED_CAR,
+    pos: { x: 25 * GRID_SIZE, y: 14 * GRID_SIZE },
+    direction: :w
+  )
 end
 
 def build_render_targets(args)
@@ -212,20 +261,22 @@ class Train
   end
 
   def tick(args)
+
+    return unless @direction != :x
+
     if args.state.tick_count.mod(GRID_SIZE).zero?
       grid_x = (@pos_x / GRID_SIZE).floor
       grid_y = (@pos_y / GRID_SIZE).floor
 
       map_tile = args.state.map[grid_y][grid_x]
 
-      if @pos_x < args.grid.left || @pos_x + GRID_SIZE > args.grid.top || @pos_y < args.grid.bottom || @pos_y > args.grid.right
+      if @pos_x < args.grid.left || @pos_x + GRID_SIZE > args.grid.right || @pos_y < args.grid.bottom || @pos_y + GRID_SIZE > args.grid.top
         @direction = :x
       else
         @direction = TRACK_REDIRECT[map_tile][@direction]
+        @angle = ANGLE_DICT[@direction]
+        @sprite = @sprite.merge(angle: @angle)
       end
-
-      @angle = ANGLE_DICT[@direction]
-      @sprite = @sprite.merge(angle: @angle)
 
     end
 
@@ -239,8 +290,6 @@ class Train
     when :e
       @pos_x += @speed
     end
-
-    return unless @direction != :x
 
     @sprite = @sprite.merge(x: @pos_x, y: @pos_y)
   end
