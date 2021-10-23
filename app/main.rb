@@ -49,7 +49,11 @@ TRACK_LIBRARY = {
   SW: { source_x: 64, source_y: 64, angle: 180, w: GRID_SIZE, h: GRID_SIZE,
         source_w: 32, source_h: 32, path: 'sprites/sprites.png' },
   SE: { source_x: 64, source_y: 64, angle: 270, w: GRID_SIZE, h: GRID_SIZE,
-        source_w: 32, source_h: 32, path: 'sprites/sprites.png' }
+        source_w: 32, source_h: 32, path: 'sprites/sprites.png' },
+  BG: { source_x: 0, source_y: 0, angle: 90, w: GRID_SIZE, h: GRID_SIZE, source_w: 32,
+        source_h: 32, path: 'sprites/blue_goal.png'},
+  RG: { source_x: 0, source_y: 0, angle: 90, w: GRID_SIZE, h: GRID_SIZE, source_w: 32,
+        source_h: 32, path: 'sprites/red_goal.png'}
 }.freeze
 
 # ----
@@ -70,7 +74,7 @@ MAP = [
   %i[NA NA NA NA SV NA NA SV NA NA SV NA NA NA NA SV NA NA NA SV NA SV NA NA NA NA],
   %i[NA NA NA NA SE SH SH NW SH SH NE SH SH SH SH NW SH SH SH NE SH NW NA NA NA NA],
   %i[NA NA NA NA SV NA NA NA NA NA NA NA NA NA NA SV NA NA NA NA NA NA NA NA NA NA],
-  %i[SH SH SH SH NW NA NA NA NA NA NA NA NA NA NA NE SH SH SH SH SH SH SH SH SH SH]
+  %i[SH RG SH SH NW NA NA NA NA NA NA NA NA NA NA NE SH SH SH SH SH SH SH SH BG SH]
 ].reverse.freeze
 
 ANGLE_DICT = {
@@ -78,7 +82,9 @@ ANGLE_DICT = {
   w: 90,
   s: 180,
   e: 270,
-  x: 0
+  x: 0,
+  bf: 270,
+  rf: 90
 }.freeze
 
 SV_REDIRECT = { n: :n, s: :s, e: :e, w: :w }.freeze
@@ -91,6 +97,9 @@ NE_REDIRECT = { w: :n, s: :e }.freeze
 
 NA_REDIRECT = { n: :x, s: :x, e: :x, w: :x, x: :x }.freeze
 
+BG_REDIRECT = { n: :bf, s: :bf, e: :bf, w: :bf, f: :bf }.freeze
+RG_REDIRECT = { n: :rf, s: :rf, e: :rf, w: :rf, f: :rf }.freeze
+
 TRACK_REDIRECT = {
   SV: SV_REDIRECT,
   SH: SH_REDIRECT,
@@ -98,7 +107,9 @@ TRACK_REDIRECT = {
   SE: SE_REDIRECT,
   NW: NW_REDIRECT,
   NE: NE_REDIRECT,
-  NA: NA_REDIRECT
+  NA: NA_REDIRECT,
+  BG: BG_REDIRECT,
+  RG: RG_REDIRECT
 }.freeze
 
 $gtk.reset
@@ -120,12 +131,12 @@ def tick(args)
                   path: :corner_tracks, primitive_marker: :sprite }
 
   args.state.blue_train.each do |train|
-    train.tick(args)
+    train.tick(args, :blue) unless args.state.blue_goal
     z_layer[2] << train.sprite
   end
 
   args.state.red_train.each do |train|
-    train.tick(args)
+    train.tick(args, :red) unless args.state.red_goal
     z_layer[2] << train.sprite
   end
 
@@ -232,6 +243,11 @@ def initialize(args)
     pos: { x: 25 * GRID_SIZE, y: 14 * GRID_SIZE },
     direction: :w
   )
+
+  args.state.blue_goal = false
+  args.state.red_goal = false
+
+  args.state.crash = false
 end
 
 def build_render_targets(args)
@@ -264,7 +280,7 @@ class Train
     @sprite = sprite
   end
 
-  def tick(args)
+  def tick(args, color)
 
     return unless @direction != :x
 
@@ -276,10 +292,23 @@ class Train
 
       if @pos_x < args.grid.left || @pos_x + GRID_SIZE > args.grid.right || @pos_y < args.grid.bottom || @pos_y + GRID_SIZE > args.grid.top
         @direction = :x
+      elsif args.state.crash == true
+        @direction = :x
       else
         @direction = TRACK_REDIRECT[map_tile][@direction]
         @angle = ANGLE_DICT[@direction]
         @sprite = @sprite.merge(angle: @angle)
+      end
+
+      case color
+      when :blue
+        args.state.red_train.each do |car|
+          args.state.crash = true if args.geometry.intersect_rect? [@pos_x, @pos_y, GRID_SIZE, GRID_SIZE], car.sprite
+        end
+      when :red
+        args.state.blue_train.each do |car|
+          args.state.crash = true if args.geometry.intersect_rect? [@pos_x, @pos_y, GRID_SIZE, GRID_SIZE], car.sprite
+        end
       end
 
     end
@@ -293,6 +322,12 @@ class Train
       @pos_y -= @speed
     when :e
       @pos_x += @speed
+    when :bf
+      args.state.blue_goal = true
+    when :rf
+      args.state.red_goal = true
+    when :x
+      args.state.crash = true
     end
 
     @sprite = @sprite.merge(x: @pos_x, y: @pos_y)
