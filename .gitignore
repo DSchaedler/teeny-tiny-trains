@@ -1,3 +1,8 @@
+logs/
+builds/
+exceptions
+Smaug.toml
+
 /exceptions/
 /logs
 
