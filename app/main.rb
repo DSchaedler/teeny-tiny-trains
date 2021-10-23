@@ -90,10 +90,10 @@ ANGLE_DICT = {
 SV_REDIRECT = { n: :n, s: :s, e: :e, w: :w }.freeze
 SH_REDIRECT = { n: :n, s: :s, e: :e, w: :w }.freeze
 
-SW_REDIRECT = { e: :s, n: :w }.freeze
-SE_REDIRECT = { w: :s, n: :e }.freeze
-NW_REDIRECT = { e: :n, s: :w }.freeze
-NE_REDIRECT = { w: :n, s: :e }.freeze
+SW_REDIRECT = { e: :s, n: :w, w: :x, s: :x }.freeze
+SE_REDIRECT = { w: :s, n: :e, e: :x, s: :x }.freeze
+NW_REDIRECT = { e: :n, s: :w, w: :x, n: :x }.freeze
+NE_REDIRECT = { w: :n, s: :e, e: :x, n: :x }.freeze
 
 NA_REDIRECT = { n: :x, s: :x, e: :x, w: :x, x: :x }.freeze
 
@@ -139,6 +139,14 @@ def tick(args)
     train.tick(args, :red) unless args.state.red_goal
     z_layer[2] << train.sprite
   end
+
+  if args.state.crash == true
+    lose(args)
+  end
+
+  if args.state.blue_goal == true && args.state.red_goal == true
+    win(args)
+  end 
 
   debug = [args.gtk.framerate_diagnostics_primitives]
 
@@ -266,6 +274,26 @@ end
 def z_draw(args, layers:, debug: nil)
   args.outputs.primitives << layers if layers
   args.outputs.debug << debug if debug
+end
+
+def win(args)
+  args.outputs.labels << {x: args.grid.center_x, y: 600, text: "You Win!", alignment_enum: 1, size_enum: 5, g: 255}
+  reset_button(args)
+end
+
+def lose(args)
+  args.outputs.labels << {x: args.grid.center_x, y: 600, text: "You Lose!", alignment_enum: 1, size_enum: 5, r: 255}
+  reset_button(args)
+end
+
+def reset_button(args)
+  button_box = {x: args.grid.center_x - 50, y: 500, w: 100, h: 50, r: 255, g: 255, b: 255}
+  args.outputs.borders << button_box
+  args.outputs.labels << {x: args.grid.center_x, y: 535, text: "Reset", alignment_enum: 1, r: 255, g: 255, b: 255}
+
+  if args.inputs.mouse.click.inside_rect? button_box
+    $gtk.reset
+  end
 end
 
 class Train
